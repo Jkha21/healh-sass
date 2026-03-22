@@ -7,17 +7,17 @@ import Topbar from "./Topbar";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface AppLayoutProps {
-  title: string;
-  activeItem?: ActiveNavItem;
-  breadcrumbs?: { label: string; onClick?: () => void }[];
-  showSearch?: boolean;
+  title:              string;
+  activeItem?:        ActiveNavItem;
+  breadcrumbs?:       { label: string; onClick?: () => void }[];
+  showSearch?:        boolean;
   searchPlaceholder?: string;
-  onSearchChange?: (value: string) => void;
-  onNavigate?: (item: ActiveNavItem) => void;
-  children: React.ReactNode;
+  onSearchChange?:    (value: string) => void;
+  children:           React.ReactNode;
 }
 
-function getInitials(name: string) {
+/* ─── Helpers ────────────────────────────────────────────── */
+function getInitials(name: string): string {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
@@ -29,13 +29,11 @@ export default function AppLayout({
   showSearch = false,
   searchPlaceholder,
   onSearchChange,
-  onNavigate,
   children,
 }: AppLayoutProps) {
-  const { user, signOut }             = useAuthStore();
+  const { user, signOut } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Lock body scroll when sidebar open on mobile
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -50,25 +48,22 @@ export default function AppLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#fdeede] antialiased">
+    <div className="min-h-screen bg-[#fdeede] font-sans text-[#4a4a4a] antialiased">
       <div className="flex min-h-screen">
 
-        {/* Sidebar + overlay */}
+        {/*
+         * Sidebar owns its own useRouter — routes itself on nav click.
+         * No onNavigate prop needed.
+         */}
         <Sidebar
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           activeItem={activeItem}
-          onNavigate={onNavigate}
           displayName={displayName}
           initials={initials}
         />
 
-        {/*
-         * md:ml-60 = 240px — matches the fixed sidebar width (w-60)
-         * On mobile sidebar is off-canvas, no margin needed
-         */}
-        <div className="flex flex-1 flex-col min-h-screen md:ml-60 transition-[margin] duration-200 ease-[cubic-bezier(.4,0,.2,1)]">
-
+        <div className="flex flex-1 flex-col min-h-screen ml-0 md:ml-60 transition-[margin] duration-200">
           <Topbar
             title={title}
             initials={initials}
@@ -80,12 +75,11 @@ export default function AppLayout({
             searchPlaceholder={searchPlaceholder}
             onSearchChange={onSearchChange}
           />
-
-          <main className="flex-1 p-7 sm:p-5">
+          <main className="flex-1 p-7 md:p-5 sm:p-4">
             {children}
           </main>
-
         </div>
+
       </div>
     </div>
   );

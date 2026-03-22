@@ -1,30 +1,30 @@
-// Clean mock Firebase - No env needed
-let mockCurrentUser: any = null;
+// lib/firebase.ts
+import { initializeApp, getApps } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAnalytics } from "firebase/analytics";
 
-export const auth = {
-  currentUser: mockCurrentUser,
-  
-  signInWithPopup: async () => {
-    // Mock Google sign-in (1.5s delay)
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    mockCurrentUser = {
-      uid: 'mock-user-123',
-      displayName: 'Dr. James Wilson',
-      email: 'dr.james@healthsaas.com',
-      photoURL: 'https://ui-avatars.com/api/?name=James+Wilson&background=ff6b35&color=fff&size=128',
-      getIdToken: () => Promise.resolve('mock-jwt-token')
-    };
-    
-    return { 
-      user: mockCurrentUser 
-    };
-  },
-  
-  signOut: async () => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    mockCurrentUser = null;
-  }
-} as any;
+// Your Firebase config object (from the file you downloaded)
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+};
 
-export const googleProvider = {} as any;
+// Initialize Firebase (only once)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+
+// Initialize Auth
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// Initialize Analytics (only in browser, not during SSR)
+let analytics;
+if (typeof window !== "undefined") {
+  analytics = getAnalytics(app);
+}
+
+export { app, auth, provider, analytics };

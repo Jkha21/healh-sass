@@ -1,8 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  devIndicators: false
+  devIndicators: false,
+
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type",           value: "application/javascript"          },
+          { key: "Service-Worker-Allowed", value: "/"                               },
+          { key: "Cache-Control",          value: "no-cache, no-store, must-revalidate" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
