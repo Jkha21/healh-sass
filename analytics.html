@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Analytics — Salford & Co. HealthSaaS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* ═══════════════════════════════════════
+   CSS CUSTOM PROPERTIES
+═══════════════════════════════════════ */
+:root {
+  --orange:        #e85520;
+  --orange-light:  #f68540;
+  --orange-pale:   #ffd09a;
+  --orange-bg:     #fdeede;
+  --orange-border: #e8c8a8;
+  --orange-muted:  #8a6650;
+  --text-dark:     #1f2937;
+  --text-body:     #4a4a4a;
+  --text-muted:    #8a6650;
+  --white:         #ffffff;
+  --card-shadow:   0 8px 32px rgba(232,85,32,.10);
+  --card-shadow-hover: 0 16px 48px rgba(232,85,32,.20);
+  --radius-card:   20px;
+  --radius-sm:     12px;
+  --sidebar-w:     240px;
+  --header-h:      64px;
+  --transition:    .2s cubic-bezier(.4,0,.2,1);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+html { scroll-behavior:smooth }
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--orange-bg);
+  min-height:100vh;
+  color:var(--text-body);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ═══════════════════════════════════════
+   LAYOUT SHELL
+═══════════════════════════════════════ */
+.app { display:flex; min-height:100vh }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--white);
+  border-right: 1px solid var(--orange-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top:0; left:0;
+  height: 100vh;
+  z-index: 200;
+  transform: translateX(0);
+  transition: transform var(--transition), box-shadow var(--transition);
+  overflow-y: auto;
+}
+.sidebar.collapsed { transform:translateX(-100%) }
+
+.sidebarLogo {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid #f3e8d9;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebarLogoText {
+  font-family:'Sora',sans-serif;
+  font-size:16px; font-weight:700;
+  color:var(--orange); letter-spacing:.8px;
+}
+
+.sidebarNav { flex:1; padding:16px 12px }
+.navSection { margin-bottom:24px }
+.navSectionLabel {
+  font-size:10.5px; font-weight:600;
+  color:#c8a888; letter-spacing:1.2px;
+  text-transform:uppercase;
+  padding:0 8px; margin-bottom:8px;
+}
+.navItem {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 12px; border-radius:var(--radius-sm);
+  color:var(--text-muted); font-size:14px; font-weight:500;
+  cursor:pointer; transition:all var(--transition);
+  border:none; background:none; width:100%; text-align:left;
+  font-family:'DM Sans',sans-serif;
+}
+.navItem:hover { background:#fdf3ec; color:var(--orange) }
+.navItem.active {
+  background:rgba(232,85,32,.10);
+  color:var(--orange); font-weight:600;
+}
+.navIcon { font-size:17px; width:20px; text-align:center; flex-shrink:0 }
+.navBadge {
+  margin-left:auto;
+  background:var(--orange); color:#fff;
+  font-size:10px; font-weight:700;
+  border-radius:99px; padding:2px 7px;
+  min-width:20px; text-align:center;
+}
+
+.sidebarFooter {
+  padding:16px 20px;
+  border-top:1px solid #f3e8d9;
+}
+.sidebarUser { display:flex; align-items:center; gap:10px }
+.sidebarAvatar {
+  width:34px; height:34px; border-radius:50%;
+  background:linear-gradient(158deg,var(--orange-pale),var(--orange-light));
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:13px; color:#fff; flex-shrink:0;
+}
+.sidebarUserInfo { flex:1; min-width:0 }
+.sidebarUserName {
+  font-size:13px; font-weight:600; color:var(--text-dark);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.sidebarUserRole { font-size:11px; color:var(--text-muted) }
+
+/* Overlay */
+.sidebarOverlay {
+  display:none;
+  position:fixed; inset:0; z-index:199;
+  background:rgba(0,0,0,.45);
+  opacity:0; transition:opacity var(--transition);
+}
+.sidebarOverlay.visible { opacity:1 }
+
+/* ─── CONTENT ─── */
+.contentWrap {
+  flex:1;
+  margin-left:var(--sidebar-w);
+  display:flex; flex-direction:column;
+  min-height:100vh;
+  transition:margin-left var(--transition);
+}
+
+/* ─── TOPBAR ─── */
+.topbar {
+  height:var(--header-h);
+  background:var(--white);
+  border-bottom:1px solid #f3e8d9;
+  display:flex; align-items:center;
+  padding:0 24px; gap:16px;
+  position:sticky; top:0; z-index:100;
+  box-shadow:0 2px 12px rgba(232,85,32,.07);
+}
+.menuBtn {
+  display:none;
+  width:36px; height:36px;
+  border-radius:10px; background:none;
+  border:1.5px solid var(--orange-border);
+  cursor:pointer; align-items:center; justify-content:center;
+  flex-shrink:0; transition:all var(--transition);
+}
+.menuBtn:hover { background:#fdf3ec; border-color:var(--orange) }
+
+.topbarLeft { display:flex; align-items:center; gap:12px; flex:1 }
+.topbarTitle {
+  font-family:'Sora',sans-serif;
+  font-size:17px; font-weight:700;
+  color:var(--text-dark);
+}
+.topbarBreadcrumb {
+  font-size:13px; color:var(--text-muted);
+  display:flex; align-items:center; gap:6px;
+}
+.topbarBreadcrumb a {
+  color:var(--orange); text-decoration:none; font-weight:500;
+  transition:opacity var(--transition);
+}
+.topbarBreadcrumb a:hover { opacity:.75 }
+
+.topbarRight { display:flex; align-items:center; gap:10px }
+.notifBtn {
+  width:36px; height:36px;
+  border-radius:10px; background:#fdf3ec;
+  border:1.5px solid var(--orange-border);
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:16px; position:relative;
+  transition:all var(--transition);
+}
+.notifBtn:hover { background:rgba(232,85,32,.15); border-color:var(--orange) }
+.notifDot {
+  position:absolute; top:5px; right:5px;
+  width:8px; height:8px;
+  background:var(--orange); border-radius:50%;
+  border:1.5px solid #fff;
+}
+.userChip {
+  display:flex; align-items:center; gap:9px;
+  padding:5px 12px 5px 5px;
+  border-radius:99px; background:#fdf3ec;
+  border:1.5px solid var(--orange-border);
+  cursor:pointer; transition:all var(--transition);
+}
+.userChip:hover { border-color:var(--orange) }
+.userChipAvatar {
+  width:30px; height:30px; border-radius:50%;
+  background:linear-gradient(158deg,var(--orange-pale),var(--orange-light));
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; color:#fff; flex-shrink:0;
+}
+.userChipName { font-size:13px; font-weight:600; color:var(--text-dark) }
+.logoutBtn {
+  padding:8px 16px;
+  border:1.5px solid var(--orange-border);
+  border-radius:var(--radius-sm);
+  background:var(--white); color:var(--orange);
+  font-size:13px; font-weight:600;
+  font-family:'Sora',sans-serif;
+  cursor:pointer; transition:all var(--transition); white-space:nowrap;
+}
+.logoutBtn:hover { background:var(--orange); color:#fff; border-color:var(--orange) }
+
+/* ═══════════════════════════════════════
+   MAIN
+═══════════════════════════════════════ */
+.main { padding:28px; flex:1 }
+
+/* ─── HERO BANNER ─── */
+.heroBanner {
+  background:linear-gradient(135deg, var(--orange) 0%, var(--orange-light) 60%, var(--orange-pale) 100%);
+  border-radius:var(--radius-card);
+  padding:28px 32px;
+  margin-bottom:24px;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:20px; position:relative; overflow:hidden;
+}
+.heroBanner::before {
+  content:''; position:absolute;
+  top:-50px; right:-50px;
+  width:200px; height:200px; border-radius:50%;
+  background:rgba(255,255,255,.07); pointer-events:none;
+}
+.heroBanner::after {
+  content:''; position:absolute;
+  bottom:-60px; right:100px;
+  width:160px; height:160px; border-radius:50%;
+  background:rgba(255,255,255,.05); pointer-events:none;
+}
+.heroText { position:relative; z-index:1 }
+.heroTitle {
+  font-family:'Sora',sans-serif;
+  font-size:26px; font-weight:800;
+  color:#fff; line-height:1.15; margin-bottom:6px;
+}
+.heroSub { font-size:14px; color:rgba(255,255,255,.82); max-width:480px; line-height:1.55 }
+.heroBadge {
+  position:relative; z-index:1;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.3);
+  border-radius:var(--radius-sm);
+  padding:10px 20px;
+  text-align:center; flex-shrink:0;
+  backdrop-filter:blur(6px);
+}
+.heroBadgeLabel { font-size:11px; color:rgba(255,255,255,.7); text-transform:uppercase; letter-spacing:.8px }
+.heroBadgeValue {
+  font-family:'Sora',sans-serif;
+  font-size:28px; font-weight:800; color:#fff; line-height:1;
+}
+.heroBadgeSub { font-size:12px; color:rgba(255,255,255,.8); font-weight:500 }
+
+/* ─── FILTER ROW ─── */
+.filterRow {
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:12px; margin-bottom:24px;
+}
+.filterTabs {
+  display:flex; gap:6px;
+  background:var(--white);
+  border:1.5px solid var(--orange-border);
+  border-radius:var(--radius-sm);
+  padding:4px;
+  overflow-x:auto;
+}
+.filterTab {
+  padding:8px 18px;
+  border-radius:9px;
+  font-size:13px; font-weight:600;
+  font-family:'Sora',sans-serif;
+  color:var(--text-muted);
+  cursor:pointer; border:none; background:transparent;
+  transition:all var(--transition); white-space:nowrap;
+}
+.filterTab:hover { color:var(--orange) }
+.filterTab.active {
+  background:linear-gradient(135deg,var(--orange),var(--orange-light));
+  color:#fff;
+  box-shadow:0 3px 10px rgba(232,85,32,.3);
+}
+.exportBtn {
+  display:flex; align-items:center; gap:8px;
+  padding:9px 18px;
+  border:1.5px solid var(--orange-border);
+  border-radius:var(--radius-sm);
+  background:var(--white); color:var(--orange);
+  font-size:13px; font-weight:600;
+  font-family:'Sora',sans-serif;
+  cursor:pointer; transition:all var(--transition); white-space:nowrap;
+}
+.exportBtn:hover { background:var(--orange); color:#fff; border-color:var(--orange) }
+
+/* ─── SUMMARY METRICS ─── */
+.metricsGrid {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px; margin-bottom:24px;
+}
+.metricCard {
+  padding:20px 18px;
+  border-radius:var(--radius-card);
+  background:var(--white);
+  box-shadow:var(--card-shadow);
+  border:1px solid rgba(232,85,32,.08);
+  transition:all var(--transition);
+  cursor:pointer; position:relative; overflow:hidden;
+  animation:fadeUp .4s both;
+}
+.metricCard:nth-child(1){animation-delay:.05s}
+.metricCard:nth-child(2){animation-delay:.1s}
+.metricCard:nth-child(3){animation-delay:.15s}
+.metricCard:nth-child(4){animation-delay:.2s}
+.metricCard:hover { transform:translateY(-4px); box-shadow:var(--card-shadow-hover) }
+.metricCard::before {
+  content:''; position:absolute; top:0; left:0; right:0;
+  height:3px;
+  background:linear-gradient(90deg,var(--orange-pale),var(--orange));
+}
+.metricTop {
+  display:flex; align-items:flex-start;
+  justify-content:space-between; margin-bottom:12px;
+}
+.metricIcon {
+  width:44px; height:44px; border-radius:13px;
+  background:linear-gradient(158deg,var(--orange-pale),var(--orange-light));
+  display:flex; align-items:center; justify-content:center; font-size:19px;
+}
+.metricChange {
+  display:flex; align-items:center; gap:3px;
+  font-size:11.5px; font-weight:600;
+  padding:3px 8px; border-radius:8px;
+}
+.changeUp { background:#dcfce7; color:#16a34a }
+.changeDown { background:#fee2e2; color:#dc2626 }
+.changeNeutral { background:#fef9c3; color:#a16207 }
+.metricValue {
+  font-family:'Sora',sans-serif;
+  font-size:30px; font-weight:800;
+  color:var(--orange); line-height:1; margin-bottom:4px;
+}
+.metricLabel { font-size:12.5px; color:var(--text-muted); font-weight:600; letter-spacing:.3px }
+.metricSub { font-size:11.5px; color:#c8a888; margin-top:4px }
+
+/* ─── CHARTS GRID ─── */
+.chartsGrid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px; margin-bottom:24px;
+}
+.chartCard {
+  background:var(--white);
+  border-radius:var(--radius-card);
+  box-shadow:var(--card-shadow);
+  border:1px solid rgba(232,85,32,.08);
+  overflow:hidden;
+  animation:fadeUp .4s both;
+}
+.chartCard:nth-child(1){animation-delay:.1s}
+.chartCard:nth-child(2){animation-delay:.15s}
+.chartCard:nth-child(3){animation-delay:.2s}
+.chartCard:nth-child(4){animation-delay:.25s}
+.chartCard.wide { grid-column:1 / -1 }
+
+.chartHeader {
+  padding:20px 24px 14px;
+  border-bottom:1px solid #f3e8d9;
+  display:flex; align-items:flex-start;
+  justify-content:space-between; flex-wrap:wrap; gap:10px;
+}
+.chartTitleWrap { flex:1 }
+.chartTitle {
+  font-family:'Sora',sans-serif;
+  font-size:15.5px; font-weight:700; color:var(--text-dark);
+  margin-bottom:3px;
+}
+.chartSubtitle { font-size:12px; color:var(--text-muted) }
+.chartBadge {
+  display:flex; align-items:center; gap:6px;
+  font-size:12px; color:var(--text-muted);
+  background:#fdf8f2; border:1px solid var(--orange-border);
+  padding:5px 12px; border-radius:99px;
+  white-space:nowrap; flex-shrink:0;
+}
+
+.chartBody { padding:20px 24px }
+.chartContainer { height:250px; position:relative }
+.chartContainer.tall { height:300px }
+
+/* Legend row */
+.chartLegend {
+  display:flex; flex-wrap:wrap; gap:14px;
+  margin-top:14px;
+}
+.legendItem {
+  display:flex; align-items:center; gap:6px;
+  font-size:12px; color:var(--text-muted); font-weight:500;
+}
+.legendDot {
+  width:10px; height:10px; border-radius:50%; flex-shrink:0;
+}
+
+/* ─── BOTTOM ROW: Table + Donut ─── */
+.bottomGrid {
+  display:grid;
+  grid-template-columns:1fr 320px;
+  gap:20px;
+}
+
+/* Diagnosis table */
+.tableWrap { overflow-x:auto }
+.dataTable { width:100%; border-collapse:collapse }
+.dataTable th {
+  text-align:left; font-size:11.5px; font-weight:600;
+  color:var(--text-muted); letter-spacing:.6px; text-transform:uppercase;
+  padding:10px 16px; border-bottom:1.5px solid #f3e8d9;
+  white-space:nowrap;
+}
+.dataTable td {
+  padding:13px 16px; border-bottom:1px solid #fdf0e6;
+  font-size:13.5px; color:var(--text-dark); vertical-align:middle;
+}
+.dataTable tr:last-child td { border-bottom:none }
+.dataTable tr:hover td { background:#fdf8f2 }
+.rankBadge {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:24px; height:24px; border-radius:8px;
+  background:rgba(232,85,32,.1); color:var(--orange);
+  font-size:11.5px; font-weight:700;
+}
+.barCell { display:flex; align-items:center; gap:10px }
+.barTrack {
+  flex:1; height:6px; background:#f3e8d9;
+  border-radius:99px; overflow:hidden;
+}
+.barFill {
+  height:100%; border-radius:99px;
+  background:linear-gradient(90deg,var(--orange-pale),var(--orange));
+  transition:width .6s var(--transition);
+}
+.trendPill {
+  padding:2px 9px; border-radius:99px;
+  font-size:11px; font-weight:600; white-space:nowrap;
+}
+.trendPillUp { background:#dcfce7; color:#16a34a }
+.trendPillDown { background:#fee2e2; color:#dc2626 }
+
+/* Donut card */
+.donutCard { display:flex; flex-direction:column }
+.donutBody {
+  flex:1; padding:20px 24px;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:16px;
+}
+.donutWrap { position:relative; width:180px; height:180px }
+.donutCenter {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  pointer-events:none;
+}
+.donutCenterValue {
+  font-family:'Sora',sans-serif;
+  font-size:28px; font-weight:800; color:var(--orange);
+}
+.donutCenterLabel { font-size:11px; color:var(--text-muted); font-weight:500 }
+.donutLegend { width:100%; display:flex; flex-direction:column; gap:10px }
+.donutLegendItem {
+  display:flex; align-items:center; gap:10px;
+  font-size:13px; color:var(--text-dark);
+}
+.donutLegendDot {
+  width:10px; height:10px; border-radius:50%; flex-shrink:0;
+}
+.donutLegendLabel { flex:1 }
+.donutLegendVal { font-weight:600; color:var(--text-dark) }
+
+/* ═══════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════ */
+@keyframes fadeUp {
+  from{opacity:0;transform:translateY(14px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE — TABLET (≤1100px)
+═══════════════════════════════════════ */
+@media(max-width:1100px){
+  .metricsGrid{grid-template-columns:repeat(2,1fr)}
+  .chartsGrid{grid-template-columns:1fr}
+  .chartCard.wide{grid-column:auto}
+  .bottomGrid{grid-template-columns:1fr}
+  .donutCard{flex-direction:row; flex-wrap:wrap}
+  .donutBody{flex-direction:row; flex-wrap:wrap; justify-content:flex-start; padding:20px}
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE — TABLET PORTRAIT (≤860px)
+═══════════════════════════════════════ */
+@media(max-width:860px){
+  :root{--sidebar-w:0px}
+  .sidebar{
+    width:260px;
+    transform:translateX(-100%);
+    box-shadow:none;
+  }
+  .sidebar.open{
+    transform:translateX(0);
+    box-shadow:4px 0 32px rgba(0,0,0,.15);
+  }
+  .sidebarOverlay{display:block}
+  .contentWrap{margin-left:0 !important}
+  .menuBtn{display:flex}
+
+  .main{padding:20px 16px}
+
+  .heroBanner{padding:22px 20px}
+  .heroTitle{font-size:20px}
+  .heroSub{font-size:13px}
+  .heroBadge{display:none}
+
+  .filterRow{flex-direction:column; align-items:stretch}
+  .filterTabs{width:100%; overflow-x:auto}
+  .exportBtn{width:100%; justify-content:center}
+
+  .topbarBreadcrumb{display:none}
+  .userChipName{display:none}
+  .logoutBtn{display:none}
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE — MOBILE (≤560px)
+═══════════════════════════════════════ */
+@media(max-width:560px){
+  .metricsGrid{grid-template-columns:1fr 1fr}
+  .chartsGrid{grid-template-columns:1fr}
+  .chartContainer{height:200px}
+  .chartContainer.tall{height:220px}
+
+  .main{padding:14px 12px}
+
+  .heroTitle{font-size:18px}
+
+  .bottomGrid{grid-template-columns:1fr}
+
+  .metricValue{font-size:24px}
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE — TINY (≤380px)
+═══════════════════════════════════════ */
+@media(max-width:380px){
+  .metricsGrid{grid-template-columns:1fr}
+  .filterTab{padding:7px 12px; font-size:12px}
+}
+
+@media(prefers-contrast:high){
+  .metricCard,.chartCard{border-width:2px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebarLogo">
+      <svg width="26" height="26" viewBox="0 0 30 30" fill="none">
+        <path d="M15 3L27 9.5V20.5L15 27L3 20.5V9.5L15 3Z" stroke="#e85520" stroke-width="1.8" fill="none"/>
+        <path d="M15 9L21 12.5V19.5L15 23L9 19.5V12.5L15 9Z" fill="#ffd09a" fill-opacity="0.7"/>
+      </svg>
+      <span class="sidebarLogoText">HEALTHSAAS</span>
+    </div>
+    <nav class="sidebarNav">
+      <div class="navSection">
+        <div class="navSectionLabel">Main</div>
+        <button class="navItem" onclick="window.location.href='dashboard.html'">
+          <span class="navIcon">⬡</span> Dashboard
+        </button>
+        <button class="navItem">
+          <span class="navIcon">👥</span> Patients
+          <span class="navBadge">247</span>
+        </button>
+        <button class="navItem">
+          <span class="navIcon">📅</span> Appointments
+          <span class="navBadge">14</span>
+        </button>
+        <button class="navItem">
+          <span class="navIcon">📋</span> Records
+        </button>
+      </div>
+      <div class="navSection">
+        <div class="navSectionLabel">Clinical</div>
+        <button class="navItem">
+          <span class="navIcon">💊</span> Prescriptions
+        </button>
+        <button class="navItem">
+          <span class="navIcon">🧪</span> Lab Results
+        </button>
+        <button class="navItem">
+          <span class="navIcon">📞</span> Telehealth
+        </button>
+      </div>
+      <div class="navSection">
+        <div class="navSectionLabel">Insights</div>
+        <button class="navItem active">
+          <span class="navIcon">📊</span> Analytics
+        </button>
+        <button class="navItem">
+          <span class="navIcon">⚙️</span> Settings
+        </button>
+      </div>
+    </nav>
+    <div class="sidebarFooter">
+      <div class="sidebarUser">
+        <div class="sidebarAvatar" id="sidebarAvatar">JD</div>
+        <div class="sidebarUserInfo">
+          <div class="sidebarUserName" id="sidebarName">Dr. James</div>
+          <div class="sidebarUserRole">General Practitioner</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="sidebarOverlay" id="overlay" onclick="closeSidebar()"></div>
+
+  <!-- ══ CONTENT ══ -->
+  <div class="contentWrap">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button class="menuBtn" id="menuBtn" onclick="toggleSidebar()" aria-label="Toggle menu">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#e85520" stroke-width="2" stroke-linecap="round">
+          <line x1="2" y1="4.5" x2="16" y2="4.5"/>
+          <line x1="2" y1="9" x2="16" y2="9"/>
+          <line x1="2" y1="13.5" x2="16" y2="13.5"/>
+        </svg>
+      </button>
+      <div class="topbarLeft">
+        <span class="topbarTitle">Analytics</span>
+        <div class="topbarBreadcrumb">
+          <span>/</span>
+          <a href="dashboard.html">Dashboard</a>
+          <span>/</span>
+          <span>Analytics</span>
+        </div>
+      </div>
+      <div class="topbarRight">
+        <button class="notifBtn">🔔<span class="notifDot"></span></button>
+        <div class="userChip">
+          <div class="userChipAvatar" id="topAvatar">JD</div>
+          <span class="userChipName" id="topName">Dr. James</span>
+        </div>
+        <button class="logoutBtn" id="logoutBtn">Sign Out</button>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- Hero Banner -->
+      <div class="heroBanner">
+        <div class="heroText">
+          <h1 class="heroTitle">Healthcare Analytics</h1>
+          <p class="heroSub">Monitor patient outcomes, revenue trends, and operational efficiency across your practice.</p>
+        </div>
+        <div class="heroBadge">
+          <div class="heroBadgeLabel">Health Score</div>
+          <div class="heroBadgeValue">94%</div>
+          <div class="heroBadgeSub">Operational</div>
+        </div>
+      </div>
+
+      <!-- Filter Row -->
+      <div class="filterRow">
+        <div class="filterTabs" id="filterTabs">
+          <button class="filterTab active" data-period="7" onclick="setPeriod(this,7)">7 Days</button>
+          <button class="filterTab" data-period="30" onclick="setPeriod(this,30)">30 Days</button>
+          <button class="filterTab" data-period="90" onclick="setPeriod(this,90)">90 Days</button>
+          <button class="filterTab" data-period="365" onclick="setPeriod(this,365)">1 Year</button>
+        </div>
+        <button class="exportBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Export Report
+        </button>
+      </div>
+
+      <!-- Summary Metrics -->
+      <div class="metricsGrid">
+        <div class="metricCard">
+          <div class="metricTop">
+            <div class="metricIcon">👥</div>
+            <span class="metricChange changeUp">↑ 12%</span>
+          </div>
+          <div class="metricValue">247</div>
+          <div class="metricLabel">Total Patients</div>
+          <div class="metricSub">vs 220 last period</div>
+        </div>
+        <div class="metricCard">
+          <div class="metricTop">
+            <div class="metricIcon">📊</div>
+            <span class="metricChange changeUp">↑ 3.2%</span>
+          </div>
+          <div class="metricValue">92%</div>
+          <div class="metricLabel">Records Complete</div>
+          <div class="metricSub">vs 89.1% last period</div>
+        </div>
+        <div class="metricCard">
+          <div class="metricTop">
+            <div class="metricIcon">💰</div>
+            <span class="metricChange changeUp">↑ 8%</span>
+          </div>
+          <div class="metricValue">$28.4K</div>
+          <div class="metricLabel">Monthly Revenue</div>
+          <div class="metricSub">vs $26.3K last period</div>
+        </div>
+        <div class="metricCard">
+          <div class="metricTop">
+            <div class="metricIcon">⏱️</div>
+            <span class="metricChange changeDown">↓ 2 min</span>
+          </div>
+          <div class="metricValue">18m</div>
+          <div class="metricLabel">Avg Wait Time</div>
+          <div class="metricSub">vs 20 min last period</div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="chartsGrid">
+
+        <!-- Patient Volume -->
+        <div class="chartCard">
+          <div class="chartHeader">
+            <div class="chartTitleWrap">
+              <div class="chartTitle">Patient Volume</div>
+              <div class="chartSubtitle">Daily appointment count</div>
+            </div>
+            <div class="chartBadge">📈 Weekly</div>
+          </div>
+          <div class="chartBody">
+            <div class="chartContainer">
+              <canvas id="patientVolumeChart"></canvas>
+            </div>
+            <div class="chartLegend">
+              <div class="legendItem"><div class="legendDot" style="background:#e85520"></div>This week</div>
+              <div class="legendItem"><div class="legendDot" style="background:#ffd09a"></div>Last week</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Revenue -->
+        <div class="chartCard">
+          <div class="chartHeader">
+            <div class="chartTitleWrap">
+              <div class="chartTitle">Revenue Trends</div>
+              <div class="chartSubtitle">Billed vs collected</div>
+            </div>
+            <div class="chartBadge">💰 Weekly</div>
+          </div>
+          <div class="chartBody">
+            <div class="chartContainer">
+              <canvas id="revenueChart"></canvas>
+            </div>
+            <div class="chartLegend">
+              <div class="legendItem"><div class="legendDot" style="background:#e85520"></div>Billed</div>
+              <div class="legendItem"><div class="legendDot" style="background:#ffd09a"></div>Collected</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appointment Types — wide -->
+        <div class="chartCard wide">
+          <div class="chartHeader">
+            <div class="chartTitleWrap">
+              <div class="chartTitle">Appointment Categories</div>
+              <div class="chartSubtitle">Breakdown by visit type over time</div>
+            </div>
+            <div class="chartBadge">📅 Monthly view</div>
+          </div>
+          <div class="chartBody">
+            <div class="chartContainer tall">
+              <canvas id="appointmentTypeChart"></canvas>
+            </div>
+            <div class="chartLegend">
+              <div class="legendItem"><div class="legendDot" style="background:#e85520"></div>General</div>
+              <div class="legendItem"><div class="legendDot" style="background:#f68540"></div>Follow-up</div>
+              <div class="legendItem"><div class="legendDot" style="background:#ffd09a"></div>Specialist</div>
+              <div class="legendItem"><div class="legendDot" style="background:#c8a888"></div>Telehealth</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Grid -->
+      <div class="bottomGrid">
+
+        <!-- Top Diagnoses Table -->
+        <div class="chartCard">
+          <div class="chartHeader">
+            <div class="chartTitleWrap">
+              <div class="chartTitle">Top Diagnoses</div>
+              <div class="chartSubtitle">Most frequent conditions this period</div>
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table class="dataTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Condition</th>
+                  <th>Patients</th>
+                  <th>Share</th>
+                  <th>Trend</th>
+                </tr>
+              </thead>
+              <tbody id="diagnosisTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Patient Mix Donut -->
+        <div class="chartCard donutCard">
+          <div class="chartHeader">
+            <div class="chartTitleWrap">
+              <div class="chartTitle">Patient Mix</div>
+              <div class="chartSubtitle">By appointment status</div>
+            </div>
+          </div>
+          <div class="donutBody">
+            <div class="donutWrap">
+              <canvas id="donutChart"></canvas>
+              <div class="donutCenter">
+                <div class="donutCenterValue">247</div>
+                <div class="donutCenterLabel">Total</div>
+              </div>
+            </div>
+            <div class="donutLegend" id="donutLegend"></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div><!-- /contentWrap -->
+</div><!-- /app -->
+
+<script>
+/* ── FIREBASE ── */
+const firebaseConfig = {
+  apiKey:"YOUR_API_KEY",
+  authDomain:"YOUR_PROJECT.firebaseapp.com",
+  projectId:"YOUR_PROJECT_ID",
+  storageBucket:"YOUR_PROJECT.appspot.com",
+  messagingSenderId:"123456789",
+  appId:"YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+auth.onAuthStateChanged(user => {
+  const name = user?.displayName || 'Doctor';
+  const first = name.split(' ')[0];
+  const initials = name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  ['topAvatar','sidebarAvatar'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = initials || 'JD';
+  });
+  const tn = document.getElementById('topName');
+  if(tn) tn.textContent = first;
+  const sn = document.getElementById('sidebarName');
+  if(sn) sn.textContent = name;
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  try { await auth.signOut() } catch(e){ console.error(e) }
+});
+
+/* ── SIDEBAR ── */
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+function toggleSidebar(){
+  const open = sidebar.classList.toggle('open');
+  overlay.classList.toggle('visible', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+function closeSidebar(){
+  sidebar.classList.remove('open');
+  overlay.classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+/* ── CHART.JS DEFAULTS ── */
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#8a6650';
+
+/* ── PERIOD DATA ── */
+const datasets = {
+  7: {
+    labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    volume:  [65,59,80,81,56,42,38],
+    volPrev: [58,52,70,74,48,35,30],
+    billed:    [12000,19000,15000,22000,18000,11000,9000],
+    collected: [11000,17500,14000,20000,16500,10200,8500],
+    types: {
+      general:    [22,18,28,30,20,12,10],
+      followUp:   [25,22,30,28,18,16,14],
+      specialist: [12,10,14,15,11,8,7],
+      telehealth: [6,9,8,8,7,6,7],
+    }
+  },
+  30: {
+    labels: ['W1','W2','W3','W4'],
+    volume:  [320,288,341,297],
+    volPrev: [298,275,310,280],
+    billed:    [72000,84000,91000,78000],
+    collected: [66000,77000,83000,72000],
+    types: {
+      general:    [110,100,120,105],
+      followUp:   [120,108,130,112],
+      specialist: [55,48,62,52],
+      telehealth: [35,32,29,28],
+    }
+  },
+  90: {
+    labels: ['Jan','Feb','Mar'],
+    volume:  [1024,1140,1246],
+    volPrev: [920,1020,1124],
+    billed:    [280000,320000,340000],
+    collected: [256000,295000,313000],
+    types: {
+      general:    [360,400,420],
+      followUp:   [430,465,500],
+      specialist: [150,180,200],
+      telehealth: [84,95,126],
+    }
+  },
+  365: {
+    labels: ['Q1','Q2','Q3','Q4'],
+    volume:  [3200,3540,3280,3820],
+    volPrev: [2900,3200,3100,3500],
+    billed:    [900000,1020000,980000,1100000],
+    collected: [830000,940000,906000,1015000],
+    types: {
+      general:    [1100,1200,1100,1280],
+      followUp:   [1350,1500,1400,1620],
+      specialist: [490,560,520,620],
+      telehealth: [260,280,260,300],
+    }
+  }
+};
+
+let currentPeriod = 7;
+let charts = {};
+
+/* ── CHART FACTORY ── */
+const ORANGE_PALETTE = ['#e85520','#f68540','#ffd09a','#c8a888','#8a6650'];
+
+function buildCharts(period) {
+  const d = datasets[period];
+  const baseOpts = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{
+      backgroundColor:'#fff',
+      titleColor:'#1f2937',
+      bodyColor:'#8a6650',
+      borderColor:'#e8c8a8',
+      borderWidth:1,
+      padding:10,
+      cornerRadius:10,
+    }},
+  };
+
+  /* Patient Volume */
+  if(charts.volume) charts.volume.destroy();
+  charts.volume = new Chart(document.getElementById('patientVolumeChart'), {
+    type:'line',
+    data:{
+      labels:d.labels,
+      datasets:[
+        {
+          label:'This period',
+          data:d.volume,
+          borderColor:'#e85520',
+          backgroundColor:'rgba(232,85,32,.12)',
+          pointBackgroundColor:'#e85520',
+          pointRadius:4,
+          tension:.4, fill:true, borderWidth:2.5
+        },
+        {
+          label:'Last period',
+          data:d.volPrev,
+          borderColor:'#ffd09a',
+          backgroundColor:'transparent',
+          pointBackgroundColor:'#ffd09a',
+          pointRadius:3,
+          tension:.4, fill:false, borderWidth:2, borderDash:[5,4]
+        }
+      ]
+    },
+    options:{
+      ...baseOpts,
+      scales:{
+        y:{beginAtZero:true, grid:{color:'rgba(232,85,32,.07)'}, ticks:{color:'#c8a888'}},
+        x:{grid:{display:false}, ticks:{color:'#c8a888'}}
+      }
+    }
+  });
+
+  /* Revenue */
+  if(charts.revenue) charts.revenue.destroy();
+  charts.revenue = new Chart(document.getElementById('revenueChart'), {
+    type:'bar',
+    data:{
+      labels:d.labels,
+      datasets:[
+        {label:'Billed',    data:d.billed,    backgroundColor:'rgba(232,85,32,.7)',  borderRadius:6},
+        {label:'Collected', data:d.collected, backgroundColor:'rgba(255,208,154,.85)', borderRadius:6}
+      ]
+    },
+    options:{
+      ...baseOpts,
+      scales:{
+        y:{beginAtZero:true, grid:{color:'rgba(232,85,32,.07)'}, ticks:{color:'#c8a888', callback:v=>'$'+(v>=1000?(v/1000).toFixed(0)+'k':v)}},
+        x:{grid:{display:false}, ticks:{color:'#c8a888'}}
+      }
+    }
+  });
+
+  /* Appointment Types (stacked area) */
+  if(charts.types) charts.types.destroy();
+  charts.types = new Chart(document.getElementById('appointmentTypeChart'), {
+    type:'line',
+    data:{
+      labels:d.labels,
+      datasets:[
+        {label:'General',    data:d.types.general,    borderColor:'#e85520', backgroundColor:'rgba(232,85,32,.15)', tension:.4, fill:true, borderWidth:2},
+        {label:'Follow-up',  data:d.types.followUp,   borderColor:'#f68540', backgroundColor:'rgba(246,133,64,.12)', tension:.4, fill:true, borderWidth:2},
+        {label:'Specialist', data:d.types.specialist, borderColor:'#ffd09a', backgroundColor:'rgba(255,208,154,.12)', tension:.4, fill:true, borderWidth:2},
+        {label:'Telehealth', data:d.types.telehealth, borderColor:'#c8a888', backgroundColor:'rgba(200,168,136,.1)', tension:.4, fill:true, borderWidth:2},
+      ]
+    },
+    options:{
+      ...baseOpts,
+      scales:{
+        y:{beginAtZero:true, stacked:false, grid:{color:'rgba(232,85,32,.07)'}, ticks:{color:'#c8a888'}},
+        x:{grid:{display:false}, ticks:{color:'#c8a888'}}
+      }
+    }
+  });
+}
+
+/* ── DIAGNOSIS TABLE ── */
+const diagnoses = [
+  {name:'Hypertension',       patients:58, pct:23, trend:'up'},
+  {name:'Type 2 Diabetes',    patients:44, pct:18, trend:'up'},
+  {name:'Upper Respiratory',  patients:37, pct:15, trend:'down'},
+  {name:'Anxiety / Depression',patients:29, pct:12, trend:'up'},
+  {name:'Musculoskeletal Pain',patients:22, pct:9,  trend:'neutral'},
+];
+
+function buildDiagnosisTable() {
+  const tbody = document.getElementById('diagnosisTable');
+  tbody.innerHTML = diagnoses.map((d,i) => `
+    <tr>
+      <td><span class="rankBadge">${i+1}</span></td>
+      <td>${d.name}</td>
+      <td><strong>${d.patients}</strong></td>
+      <td>
+        <div class="barCell">
+          <div class="barTrack"><div class="barFill" style="width:${d.pct*4}%"></div></div>
+          <span style="font-size:12px;color:var(--text-muted);min-width:32px">${d.pct}%</span>
+        </div>
+      </td>
+      <td><span class="trendPill ${d.trend==='up'?'trendPillUp':'trendPillDown'}">
+        ${d.trend==='up'?'↑ Rising':d.trend==='down'?'↓ Falling':'→ Stable'}
+      </span></td>
+    </tr>
+  `).join('');
+}
+
+/* ── DONUT CHART ── */
+const donutData = [
+  {label:'Completed',   value:120, color:'#e85520'},
+  {label:'Scheduled',   value:80,  color:'#f68540'},
+  {label:'Follow-up',   value:32,  color:'#ffd09a'},
+  {label:'No-show',     value:15,  color:'#c8a888'},
+];
+
+function buildDonut() {
+  if(charts.donut) charts.donut.destroy();
+  charts.donut = new Chart(document.getElementById('donutChart'), {
+    type:'doughnut',
+    data:{
+      labels:donutData.map(d=>d.label),
+      datasets:[{
+        data:donutData.map(d=>d.value),
+        backgroundColor:donutData.map(d=>d.color),
+        borderWidth:2, borderColor:'#fff',
+        hoverOffset:6
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      cutout:'68%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#fff', titleColor:'#1f2937', bodyColor:'#8a6650',
+          borderColor:'#e8c8a8', borderWidth:1, padding:10, cornerRadius:10,
+        }
+      }
+    }
+  });
+
+  const legend = document.getElementById('donutLegend');
+  legend.innerHTML = donutData.map(d=>`
+    <div class="donutLegendItem">
+      <div class="donutLegendDot" style="background:${d.color}"></div>
+      <span class="donutLegendLabel">${d.label}</span>
+      <span class="donutLegendVal">${d.value}</span>
+    </div>
+  `).join('');
+}
+
+/* ── PERIOD SWITCH ── */
+function setPeriod(el, period) {
+  document.querySelectorAll('.filterTab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  currentPeriod = period;
+  buildCharts(period);
+}
+
+/* ── INIT ── */
+buildCharts(currentPeriod);
+buildDiagnosisTable();
+buildDonut();
+</script>
+</body>
+</html>
