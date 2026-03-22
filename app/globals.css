@@ -85,3 +85,16 @@ select {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Add these keyframes to your globals.css
+   They were previously injected inline via STYLES — now they live at build time. */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
