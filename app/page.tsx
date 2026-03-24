@@ -1,65 +1,110 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "./components/ui/Button";
+import useAuthStore from "./store/useAuthStore";
+import LoginPanel from "./components/auth/LoginPanel";
+import { GoogleIcon, ShieldIcon, AlertIcon, Spinner } from "./components/auth/LogoIcons";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const { signInWithGoogle, user, loading, error } = useAuthStore();
+  const [welcomeName, setWelcomeName] = useState<string>("");
+  const redirected = useRef(false);
+
+  useEffect(() => {
+    if (user && !redirected.current) {
+      redirected.current = true;
+      setWelcomeName(user.displayName?.split(" ")[0] ?? "");
+      router.replace("/dashboard");
+    }
+  }, [user]);
+
+  const handleSignIn = async () => {
+    try { await signInWithGoogle(); } catch { /* error already in store */ }
+  };
+
+  const isDisabled = loading || !!welcomeName;
+  const btnLabel   = welcomeName
+    ? `Welcome, ${welcomeName}!`
+    : loading ? "Signing you in…" : "Continue with Google";
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-dvh bg-[#fdeede] dark:bg-[#1c0f06] font-sans antialiased grid grid-cols-1 md:grid-cols-[46fr_54fr] items-stretch">
+
+      <LoginPanel />
+
+      <div className="flex items-start md:items-center justify-center px-6 py-9 sm:px-10 md:px-16 bg-[#fdeede] dark:bg-[#1c0f06]">
+        <div className="w-full max-w-[420px] animate-[fadeUp_.5s_cubic-bezier(.16,1,.3,1)_both]">
+
+          <h1 className="font-display font-extrabold text-[#e85520] dark:text-[#f97848] tracking-tight leading-[1.08] mb-2.5 text-[clamp(28px,3.5vw,42px)]">
+            Welcome Back!
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-[#8a6650] dark:text-[#b89888] leading-[1.68] mb-[clamp(28px,3.5vw,40px)] text-[clamp(13px,1.1vw,14px)]">
+            Log in to access your dashboard, manage your account, and continue
+            securely with full control.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+          {/* Error banner */}
+          {error && (
+            <div
+              role="alert"
+              aria-live="polite"
+              className="flex items-center gap-2.5 bg-[#fde8e8] border border-[#f5bcbc] rounded-[10px] px-3.5 py-3 text-[13px] text-[#c0392b] mb-[18px]"
+            >
+              <AlertIcon />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/*
+           * ✅ variant="ghost" — renders a plain button with no border/colour
+           *    base styles, so our className fully controls the appearance
+           *    without any style conflicts.
+           *
+           * ❌ variant="outline" was adding its own border-2 border-orange-500
+           *    and text-orange-600 which fought against our custom classes.
+           */}
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={handleSignIn}
+            disabled={isDisabled}
+            type="button"
+            aria-label="Sign in with Google"
+            className={[
+              "relative overflow-hidden w-full flex items-center justify-center gap-3",
+              "min-h-[54px] px-5 rounded-[14px]",
+              "bg-white dark:bg-[#2a1608]",
+              "border-2 border-[#e8c8a8] dark:border-[#5a3020]",
+              "text-gray-800 dark:text-[#f1e4d8]",
+              "font-display font-bold text-[clamp(14px,1.3vw,16px)]",
+              "shadow-[0_4px_16px_rgba(0,0,0,.09)]",
+              "transition-all duration-200",
+              "hover:border-[#e85520] hover:bg-white hover:shadow-[0_8px_24px_rgba(232,85,32,.28)] hover:-translate-y-0.5",
+              "dark:hover:border-[#f97848] dark:hover:bg-[#341c0a]",
+              "active:translate-y-0 active:shadow-[0_4px_16px_rgba(0,0,0,.09)]",
+              "disabled:opacity-55 disabled:shadow-none disabled:bg-gray-100 disabled:cursor-not-allowed disabled:transform-none",
+            ].join(" ")}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <span className="absolute inset-0 bg-gradient-to-br from-orange-500/[.06] to-transparent opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
+            {loading ? <Spinner /> : <GoogleIcon />}
+            <span className={`flex-1 text-center transition-opacity ${loading ? "opacity-70" : "opacity-100"}`}>
+              {btnLabel}
+            </span>
+          </Button>
+
+          <div
+            className="flex items-center justify-center gap-1.5 mt-3.5 text-xs text-[#a08870] dark:text-[#7a5848] font-medium"
+            aria-label="Authentication security notice"
           >
-            Documentation
-          </a>
+            <ShieldIcon />
+            Secured by Firebase &amp; Google OAuth 2.0
+          </div>
+
         </div>
-      </main>
+      </div>
     </div>
   );
 }
