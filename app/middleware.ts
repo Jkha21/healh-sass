@@ -1,4 +1,6 @@
+// middleware.ts
 import { NextRequest, NextResponse } from "next/server";
+import { verifySessionCookie } from "./lib/firebase-admin";
 
 /* ─── Route definitions ──────────────────────────────────── */
 
@@ -23,21 +25,17 @@ const PUBLIC_ROUTES: string[] = ["/", "/offline"];
 
 /* ─── Helpers ────────────────────────────────────────────── */
 
-/**
- * Checks whether the incoming request has a Firebase session cookie.
- * Firebase sets `__session` when using Firebase Hosting + SSR,
- * or you can set a custom cookie from your own auth API route.
- * Adjust the cookie name to match your implementation.
- */
 function getSessionToken(req: NextRequest): string | undefined {
+  // Your app uses "session" cookie; keep fallbacks if you want
   return (
-    req.cookies.get("__session")?.value ??
     req.cookies.get("session")?.value ??
+    req.cookies.get("__session")?.value ??
     req.cookies.get("auth-token")?.value
   );
 }
 
 function isProtected(pathname: string): boolean {
+  if (PUBLIC_ROUTES.includes(pathname)) return false;
   return PROTECTED_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
@@ -50,10 +48,26 @@ function isAuthRoute(pathname: string): boolean {
 }
 
 /* ─── Middleware ─────────────────────────────────────────── */
-export function middleware(req: NextRequest): NextResponse {
+export async function middleware(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
-  const token        = getSessionToken(req);
-  const isLoggedIn   = Boolean(token);
+
+  // Skip public routes early
+  if (PUBLIC_ROUTES.includes(pathname)) {
+    return NextResponse.next();
+  }
+
+  const token = getSessionToken(req);
+  let isLoggedIn = false;
+
+  if (token) {
+    try {
+      // This will throw if cookie is invalid/expired/revoked
+      await verifySessionCookie(token);
+      isLoggedIn = true;
+    } catch {
+      isLoggedIn = false;
+    }
+  }
 
   /* 1. Authenticated user tries to visit /login → redirect to dashboard */
   if (isLoggedIn && isAuthRoute(pathname)) {
@@ -63,7 +77,6 @@ export function middleware(req: NextRequest): NextResponse {
   /* 2. Unauthenticated user tries to visit a protected route → redirect to /login */
   if (!isLoggedIn && isProtected(pathname)) {
     const loginUrl = new URL("/login", req.url);
-    /* Preserve the intended destination so we can redirect back after login */
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -75,15 +88,6 @@ export function middleware(req: NextRequest): NextResponse {
 /* ─── Matcher ────────────────────────────────────────────── */
 export const config = {
   matcher: [
-    /*
-     * Match all paths EXCEPT:
-     *   - _next/static  (Next.js build assets)
-     *   - _next/image   (Next.js image optimisation)
-     *   - favicon.ico
-     *   - sw.js         (Service Worker — must be publicly accessible)
-     *   - icons/*       (PWA icons)
-     *   - /api/*        (API routes handle their own auth)
-     */
     "/((?!_next/static|_next/image|favicon.ico|sw.js|icons|api).*)",
   ],
 };

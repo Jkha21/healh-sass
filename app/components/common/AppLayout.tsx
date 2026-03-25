@@ -2,23 +2,29 @@
 
 import React, { useState, useEffect } from "react";
 import useAuthStore from "../../store/useAuthStore";
+import { useAuthActions } from "../../store/useAuthActions";
 import Sidebar, { ActiveNavItem } from "./Sidebar";
 import Topbar from "./Topbar";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface AppLayoutProps {
-  title:              string;
-  activeItem?:        ActiveNavItem;
-  breadcrumbs?:       { label: string; onClick?: () => void }[];
-  showSearch?:        boolean;
+  title: string;
+  activeItem?: ActiveNavItem;
+  breadcrumbs?: { label: string; onClick?: () => void }[];
+  showSearch?: boolean;
   searchPlaceholder?: string;
-  onSearchChange?:    (value: string) => void;
-  children:           React.ReactNode;
+  onSearchChange?: (value: string) => void;
+  children: React.ReactNode;
 }
 
 /* ─── Helpers ────────────────────────────────────────────── */
 function getInitials(name: string): string {
-  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 /* ─── AppLayout ──────────────────────────────────────────── */
@@ -31,30 +37,25 @@ export default function AppLayout({
   onSearchChange,
   children,
 }: AppLayoutProps) {
-  const { user, signOut } = useAuthStore();
+  const { user } = useAuthStore();
+  const { signOut } = useAuthActions();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [sidebarOpen]);
 
   const displayName = user?.displayName ?? "Doctor";
-  const firstName   = displayName.split(" ")[0];
-  const initials    = getInitials(displayName);
-
-  const handleSignOut = async () => {
-    try { await signOut(); } catch (e) { console.error(e); }
-  };
+  const firstName = displayName.split(" ")[0];
+  const initials = getInitials(displayName);
 
   return (
     <div className="min-h-screen bg-[#fdeede] font-sans text-[#4a4a4a] antialiased">
       <div className="flex min-h-screen">
-
-        {/*
-         * Sidebar owns its own useRouter — routes itself on nav click.
-         * No onNavigate prop needed.
-         */}
+        {/* Sidebar routes itself via useRouter internally */}
         <Sidebar
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
@@ -69,17 +70,14 @@ export default function AppLayout({
             initials={initials}
             firstName={firstName}
             onMenuClick={() => setSidebarOpen((o) => !o)}
-            onSignOut={handleSignOut}
+            onSignOut={signOut} // uses hook: signOut + redirect
             breadcrumbs={breadcrumbs}
             showSearch={showSearch}
             searchPlaceholder={searchPlaceholder}
             onSearchChange={onSearchChange}
           />
-          <main className="flex-1 p-7 md:p-5 sm:p-4">
-            {children}
-          </main>
+          <main className="flex-1 p-7 md:p-5 sm:p-4">{children}</main>
         </div>
-
       </div>
     </div>
   );

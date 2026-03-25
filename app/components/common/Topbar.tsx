@@ -3,37 +3,50 @@
 import React, { FC } from "react";
 import NotificationBell from "../notifications/Notifications";
 
-/* ─── Types ──────────────────────────────────────────────── */
 interface BreadcrumbItem {
-  label:    string;
+  label: string;
   onClick?: () => void;
 }
 
 interface TopbarProps {
-  title:              string;
-  initials:           string;
-  firstName:          string;
-  onMenuClick:        () => void;
-  onSignOut:          () => void;
-  breadcrumbs?:       BreadcrumbItem[];
-  showSearch?:        boolean;
+  title: string;
+  initials: string;
+  firstName: string;
+  onMenuClick: () => void;
+  onSignOut: () => void;
+  breadcrumbs?: BreadcrumbItem[];
+  showSearch?: boolean;
   searchPlaceholder?: string;
-  onSearchChange?:    (value: string) => void;
+  onSearchChange?: (value: string) => void;
 }
 
 /* ─── SVGs ───────────────────────────────────────────────── */
 const MenuSvg: FC = () => (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
-    stroke="#e85520" strokeWidth="2" strokeLinecap="round">
-    <line x1="2" y1="4.5"  x2="16" y2="4.5" />
-    <line x1="2" y1="9"    x2="16" y2="9"   />
-    <line x1="2" y1="13.5" x2="16" y2="13.5"/>
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 18 18"
+    fill="none"
+    stroke="#e85520"
+    strokeWidth="2"
+    strokeLinecap="round"
+  >
+    <line x1="2" y1="4.5" x2="16" y2="4.5" />
+    <line x1="2" y1="9" x2="16" y2="9" />
+    <line x1="2" y1="13.5" x2="16" y2="13.5" />
   </svg>
 );
 
 const SearchSvg: FC = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-    stroke="#c8a888" strokeWidth="2.5" strokeLinecap="round">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="#c8a888"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+  >
     <circle cx="11" cy="11" r="8" />
     <line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
@@ -41,15 +54,17 @@ const SearchSvg: FC = () => (
 
 /* ─── Topbar ─────────────────────────────────────────────── */
 const Topbar: FC<TopbarProps> = ({
-  title, initials, firstName,
-  onMenuClick, onSignOut,
+  title,
+  initials,
+  firstName,
+  onMenuClick,
+  onSignOut,
   breadcrumbs = [],
   showSearch = false,
   searchPlaceholder = "Search patients, records…",
   onSearchChange,
 }) => (
   <header className="sticky top-0 z-[100] flex h-16 shrink-0 items-center gap-4 border-b border-[#f3e8d9] bg-white px-6 shadow-[0_2px_12px_rgba(232,85,32,.07)]">
-
     {/* Hamburger — mobile only */}
     <button
       aria-label="Toggle menu"
@@ -106,7 +121,6 @@ const Topbar: FC<TopbarProps> = ({
 
     {/* Right actions */}
     <div className="flex items-center gap-2.5 shrink-0">
-
       {/* Live notification bell */}
       <NotificationBell />
 
@@ -127,7 +141,6 @@ const Topbar: FC<TopbarProps> = ({
       >
         Sign Out
       </button>
-
     </div>
   </header>
 );
