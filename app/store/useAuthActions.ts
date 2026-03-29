@@ -11,7 +11,7 @@ export function useAuthActions() {
   const signOut = async () => {
     try {
       await storeSignOut();        // 1) Firebase signOut + destroySession()
-      router.replace("/login");    // 2) Go to login after sign-out
+      router.replace("/");    // 2) Go to login after sign-out
     } catch (e) {
       console.error("Sign-out failed:", e);
     }

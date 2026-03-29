@@ -56,10 +56,7 @@ function GridCard({ p, idx, onSelect }: { p: Patient; idx: number; onSelect: (p:
       style={{ animationDelay: `${idx * 0.05}s` }}
       className="relative flex flex-col bg-white rounded-2xl border border-orange-900/[.08] shadow-[0_8px_32px_rgba(232,85,32,.10)] overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1.5 hover:shadow-[0_16px_48px_rgba(232,85,32,.20)]"
     >
-      {/* Status top bar */}
       <div className={`absolute inset-x-0 top-0 h-1 ${STATUS_BAR[p.status]}`} />
-
-      {/* Top section */}
       <div className="flex flex-col items-center gap-3.5 px-6 pt-7 pb-5 border-b border-orange-100">
         <div className="w-[72px] h-[72px] rounded-[20px] bg-gradient-to-br from-orange-200 to-orange-400 flex items-center justify-center font-display text-[26px] font-extrabold text-white shadow-[0_8px_24px_rgba(232,85,32,.25)]">
           {p.initials}
@@ -72,8 +69,6 @@ function GridCard({ p, idx, onSelect }: { p: Patient; idx: number; onSelect: (p:
           {m.label}
         </span>
       </div>
-
-      {/* Body */}
       <div className="flex flex-col gap-2.5 px-5 py-4 flex-1">
         {([
           ["Age",       `${p.age} yrs`],
@@ -87,8 +82,6 @@ function GridCard({ p, idx, onSelect }: { p: Patient; idx: number; onSelect: (p:
           </div>
         ))}
       </div>
-
-      {/* Footer */}
       <div className="flex items-center justify-between gap-2 px-5 py-3.5 border-t border-orange-50">
         <span className="flex items-center gap-1.5 text-xs font-semibold text-orange-500">
           📅 {p.nextVisit}
@@ -98,55 +91,6 @@ function GridCard({ p, idx, onSelect }: { p: Patient; idx: number; onSelect: (p:
           className="px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-500 text-xs font-semibold transition-all hover:bg-orange-500 hover:text-white"
         >
           View →
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ─── List Card ──────────────────────────────────────────── */
-function ListCard({ p, idx, onSelect }: { p: Patient; idx: number; onSelect: (p: Patient) => void }) {
-  const m = STATUS_META[p.status];
-  return (
-    <div
-      onClick={() => onSelect(p)}
-      style={{ animationDelay: `${idx * 0.05}s` }}
-      className="grid items-center gap-3 bg-white border border-orange-900/[.07] rounded-[14px] px-5 py-3.5 mb-2 cursor-pointer transition-all duration-200 hover:shadow-[0_6px_24px_rgba(232,85,32,.14)] hover:border-orange-500/20 hover:translate-x-0.5"
-      /* cols: patient | status | condition | next visit | location | action */
-      /* responsive hiding done via hidden classes on cells */
-    >
-      {/* Patient */}
-      <div className="flex items-center gap-3 col-span-1">
-        <div className="w-[42px] h-[42px] rounded-xl bg-gradient-to-br from-orange-200 to-orange-400 flex items-center justify-center font-display text-[15px] font-bold text-white shrink-0">
-          {p.initials}
-        </div>
-        <div className="min-w-0">
-          <div className="font-display text-[14.5px] font-bold text-gray-800 truncate">{p.name}</div>
-          <div className="text-[11.5px] text-orange-800/50">#{p.id}</div>
-        </div>
-      </div>
-
-      {/* Status */}
-      <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap before:content-[''] before:w-1.5 before:h-1.5 before:rounded-full before:bg-current ${m.badgeCls}`}>
-        {m.label}
-      </span>
-
-      {/* Condition */}
-      <span className="text-[13.5px] text-gray-800 hidden sm:block">{p.condition}</span>
-
-      {/* Next Visit */}
-      <span className="text-[13px] text-gray-800 hidden lg:block">{p.nextVisit}</span>
-
-      {/* Location */}
-      <span className="text-[13px] text-orange-800/60 hidden xl:block">{p.location}</span>
-
-      {/* Action */}
-      <div className="flex justify-end">
-        <button
-          onClick={(e) => { e.stopPropagation(); onSelect(p); }}
-          className="w-8 h-8 rounded-[9px] bg-[#fdf3ec] border border-[#e8c8a8] flex items-center justify-center text-sm transition-all hover:bg-orange-500 hover:border-orange-500 hover:text-white"
-        >
-          →
         </button>
       </div>
     </div>
@@ -177,25 +121,15 @@ export default function PatientsPage() {
   const activeCount = PATIENTS.filter(p => p.status === "active").length;
   const urgentCount = PATIENTS.filter(p => p.status === "urgent").length;
 
-  /* ── Detail view ── */
   if (selected) {
-    return (
-      <PatientDetailsPage
-        patient={selected}
-        onBack={() => setSelected(null)}
-      />
-    );
+    return <PatientDetailsPage patient={selected} onBack={() => setSelected(null)} />;
   }
 
   return (
-    <AppLayout
-      title="Patients"
-      activeItem="patients"
-      breadcrumbs={[{ label: "Dashboard" }, { label: "Patients" }]}
-    >
+    <AppLayout title="Patients" activeItem="patients" breadcrumbs={[{ label: "Dashboard" }, { label: "Patients" }]}>
 
       {/* ══ Hero ══ */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-orange-400 to-orange-200 px-8 py-7 mb-6 flex items-center justify-between gap-5">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-orange-400 to-orange-200 px-6 sm:px-8 py-7 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <span className="pointer-events-none absolute -top-12 -right-12 w-52 h-52 rounded-full bg-white/[.07]" />
         <div className="relative z-10">
           <h1 className="font-display text-2xl sm:text-[26px] font-extrabold text-white leading-tight mb-1.5">
@@ -205,154 +139,149 @@ export default function PatientsPage() {
             Switch between grid and list views · Search · Filter by status
           </p>
         </div>
-        {/* Stat badges */}
-        <div className="relative z-10 hidden sm:flex gap-3 shrink-0">
+        {/* Stat badges - Grid on mobile, Flex on desktop */}
+        <div className="relative z-10 grid grid-cols-3 md:flex gap-3 w-full md:w-auto shrink-0">
           {[
             { num: totalCount,  label: "Total"  },
             { num: activeCount, label: "Active"  },
             { num: urgentCount, label: "Urgent"  },
           ].map(({ num, label }) => (
-            <div key={label} className="rounded-xl border border-white/25 bg-white/15 backdrop-blur-sm px-4 py-2.5 text-center">
-              <div className="font-display text-2xl font-extrabold text-white leading-none">{num}</div>
-              <div className="text-[11px] text-white/75 mt-0.5">{label}</div>
+            <div key={label} className="rounded-xl border border-white/25 bg-white/15 backdrop-blur-sm px-3 sm:px-4 py-2.5 text-center flex-1">
+              <div className="font-display text-xl sm:text-2xl font-extrabold text-white leading-none">{num}</div>
+              <div className="text-[10px] sm:text-[11px] text-white/75 mt-0.5">{label}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* ══ Toolbar ══ */}
-      <div className="flex flex-wrap items-center gap-3 bg-white rounded-2xl border border-orange-900/[.06] shadow-[0_8px_32px_rgba(232,85,32,.10)] px-5 py-4 mb-5">
-        {/* Search */}
-        <div className="flex items-center gap-2 bg-[#fdf8f2] border border-[#e8c8a8] rounded-xl px-3.5 py-2.5 flex-1 min-w-[180px] max-w-[340px] transition-all focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/10">
-          <SearchSvg />
-          <input
-            type="text"
-            placeholder="Search by name, ID, condition…"
-            value={searchQ}
-            onChange={e => setSearchQ(e.target.value)}
-            className="bg-transparent border-none outline-none text-[13.5px] text-gray-800 placeholder:text-[#c8a888] w-full"
-          />
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 bg-white rounded-2xl border border-orange-900/[.06] shadow-[0_8px_32px_rgba(232,85,32,.10)] px-4 sm:px-5 py-4 mb-5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+          {/* Search */}
+          <div className="flex items-center gap-2 bg-[#fdf8f2] border border-[#e8c8a8] rounded-xl px-3.5 py-2.5 flex-1 transition-all focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/10">
+            <SearchSvg />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQ}
+              onChange={e => setSearchQ(e.target.value)}
+              className="bg-transparent border-none outline-none text-[13.5px] text-gray-800 placeholder:text-[#c8a888] w-full"
+            />
+          </div>
+
+          {/* Status filter */}
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value as PatientStatus | "all")}
+            className="px-3.5 py-2.5 border border-[#e8c8a8] rounded-xl bg-white text-[13.5px] text-gray-800 outline-none cursor-pointer focus:border-orange-500 transition-colors w-full sm:w-auto"
+          >
+            <option value="all">All Status</option>
+            <option value="urgent">High Priority</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="complete">Completed</option>
+          </select>
         </div>
 
-        {/* Status filter */}
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value as PatientStatus | "all")}
-          className="px-3.5 py-2.5 border border-[#e8c8a8] rounded-xl bg-white text-[13.5px] text-gray-800 outline-none cursor-pointer focus:border-orange-500 transition-colors"
-        >
-          <option value="all">All Status</option>
-          <option value="urgent">High Priority</option>
-          <option value="active">Active</option>
-          <option value="pending">Pending</option>
-          <option value="complete">Completed</option>
-        </select>
-
         {/* Right controls */}
-        <div className="flex items-center gap-2.5 ml-auto">
+        <div className="flex flex-wrap items-center justify-between lg:justify-end gap-3 lg:ml-auto">
           <span className="text-[13px] text-orange-800/60 font-medium whitespace-nowrap">
             {filtered.length} {filtered.length === 1 ? "patient" : "patients"}
           </span>
 
-          {/* View toggle */}
-          <div className="flex items-center bg-[#fdf8f2] border border-[#e8c8a8] rounded-[10px] p-0.5">
-            {(["grid", "list"] as ViewMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setView(mode)}
-                className={[
-                  "flex items-center gap-1.5 px-3.5 py-1.5 rounded-[8px] text-[13px] font-semibold font-display capitalize transition-all duration-200",
-                  view === mode
-                    ? "bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-[0_3px_10px_rgba(232,85,32,.30)]"
-                    : "text-orange-800/50 hover:text-orange-500",
-                ].join(" ")}
-              >
-                {mode === "grid" ? <GridSvg active={view === "grid"} /> : <ListSvg active={view === "list"} />}
-                <span>{mode}</span>
-              </button>
-            ))}
-          </div>
+          <div className="flex items-center gap-3">
+            {/* View toggle */}
+            <div className="flex items-center bg-[#fdf8f2] border border-[#e8c8a8] rounded-[10px] p-0.5">
+              {(["grid", "list"] as ViewMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setView(mode)}
+                  className={[
+                    "flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-[8px] text-[13px] font-semibold font-display capitalize transition-all duration-200",
+                    view === mode
+                      ? "bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-[0_3px_10px_rgba(232,85,32,.30)]"
+                      : "text-orange-800/50 hover:text-orange-500",
+                  ].join(" ")}
+                >
+                  {mode === "grid" ? <GridSvg active={view === "grid"} /> : <ListSvg active={view === "list"} />}
+                  <span className="hidden sm:inline">{mode}</span>
+                </button>
+              ))}
+            </div>
 
-          {/* Add patient */}
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 text-white font-display text-[13.5px] font-semibold transition-all hover:-translate-y-px hover:shadow-[0_6px_18px_rgba(232,85,32,.35)]">
-            <PlusSvg /><span>Add Patient</span>
-          </button>
+            {/* Add patient */}
+            <button className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 text-white font-display text-[13.5px] font-semibold transition-all hover:-translate-y-px hover:shadow-[0_6px_18px_rgba(232,85,32,.35)]">
+              <PlusSvg /><span className="hidden sm:inline">Add Patient</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ══ Empty state ══ */}
-      {filtered.length === 0 && (
+      {/* ══ List/Grid Content ══ */}
+      {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border-2 border-dashed border-[#e8c8a8]">
           <div className="text-5xl mb-4">🔍</div>
           <div className="font-display text-lg font-bold text-gray-800 mb-2">No patients found</div>
           <div className="text-sm text-orange-800/60">Try adjusting your search or filter</div>
         </div>
-      )}
-
-      {/* ══ Grid view ══ */}
-      {filtered.length > 0 && view === "grid" && (
+      ) : view === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filtered.map((p, i) => (
             <GridCard key={p.id} p={p} idx={i} onSelect={setSelected} />
           ))}
         </div>
-      )}
-
-      {/* ══ List view ══ */}
-      {filtered.length > 0 && view === "list" && (
-        <div>
-          {/* List header — mirrors ListCard column visibility */}
-          <div className="grid px-5 py-2.5 text-[11.5px] font-semibold text-orange-800/60 tracking-[.6px] uppercase mb-1"
-            style={{ gridTemplateColumns: "2.5fr 1fr 1.2fr 1.2fr 1fr 60px" }}
-          >
-            <span>Patient</span>
-            <span>Status</span>
-            <span className="hidden sm:block">Condition</span>
-            <span className="hidden lg:block">Next Visit</span>
-            <span className="hidden xl:block">Location</span>
-            <span />
-          </div>
-          {/* Wrap in grid so cards match header */}
-          {filtered.map((p, i) => (
-            <div
-              key={p.id}
-              className="grid items-center gap-3 bg-white border border-orange-900/[.07] rounded-[14px] px-5 py-3.5 mb-2 cursor-pointer transition-all duration-200 hover:shadow-[0_6px_24px_rgba(232,85,32,.14)] hover:border-orange-500/20 hover:translate-x-0.5"
-              style={{ gridTemplateColumns: "2.5fr 1fr 1.2fr 1.2fr 1fr 60px", animationDelay: `${i * 0.05}s` }}
-              onClick={() => setSelected(p)}
+      ) : (
+        <div className="overflow-x-auto lg:overflow-visible">
+          <div className="min-w-[600px] lg:min-w-full">
+            {/* List header */}
+            <div className="grid px-5 py-2.5 text-[11.5px] font-semibold text-orange-800/60 tracking-[.6px] uppercase mb-1"
+              style={{ gridTemplateColumns: "minmax(200px, 2.5fr) 120px 1fr 1fr 1fr 60px" }}
             >
-              {/* Patient */}
-              <div className="flex items-center gap-3">
-                <div className="w-[42px] h-[42px] rounded-xl bg-gradient-to-br from-orange-200 to-orange-400 flex items-center justify-center font-display text-[15px] font-bold text-white shrink-0">
-                  {p.initials}
-                </div>
-                <div className="min-w-0">
-                  <div className="font-display text-[14.5px] font-bold text-gray-800 truncate">{p.name}</div>
-                  <div className="text-[11.5px] text-orange-800/50">#{p.id}</div>
-                </div>
-              </div>
-              {/* Status */}
-              <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap before:content-[''] before:w-1.5 before:h-1.5 before:rounded-full before:bg-current ${STATUS_META[p.status].badgeCls}`}>
-                {STATUS_META[p.status].label}
-              </span>
-              {/* Condition */}
-              <span className="text-[13.5px] text-gray-800 hidden sm:block">{p.condition}</span>
-              {/* Next Visit */}
-              <span className="text-[13px] text-gray-800 hidden lg:block">{p.nextVisit}</span>
-              {/* Location */}
-              <span className="text-[13px] text-orange-800/60 hidden xl:block">{p.location}</span>
-              {/* Action */}
-              <div className="flex justify-end">
-                <button
-                  onClick={(e) => { e.stopPropagation(); setSelected(p); }}
-                  className="w-8 h-8 rounded-[9px] bg-[#fdf3ec] border border-[#e8c8a8] flex items-center justify-center text-sm transition-all hover:bg-orange-500 hover:border-orange-500 hover:text-white"
-                >
-                  →
-                </button>
-              </div>
+              <span>Patient</span>
+              <span>Status</span>
+              <span className="hidden sm:block">Condition</span>
+              <span className="hidden lg:block">Next Visit</span>
+              <span className="hidden xl:block">Location</span>
+              <span />
             </div>
-          ))}
+            {filtered.map((p, i) => (
+              <div
+                key={p.id}
+                onClick={() => setSelected(p)}
+                style={{ 
+                  animationDelay: `${i * 0.05}s`,
+                  gridTemplateColumns: "minmax(200px, 2.5fr) 120px 1fr 1fr 1fr 60px"
+                }}
+                className="grid items-center gap-3 bg-white border border-orange-900/[.07] rounded-[14px] px-5 py-3.5 mb-2 cursor-pointer transition-all duration-200 hover:shadow-[0_6px_24px_rgba(232,85,32,.14)] hover:border-orange-500/20 hover:translate-x-0.5"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-[42px] h-[42px] rounded-xl bg-gradient-to-br from-orange-200 to-orange-400 flex items-center justify-center font-display text-[15px] font-bold text-white shrink-0">
+                    {p.initials}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-display text-[14.5px] font-bold text-gray-800 truncate">{p.name}</div>
+                    <div className="text-[11.5px] text-orange-800/50">#{p.id}</div>
+                  </div>
+                </div>
+                <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap before:content-[''] before:w-1.5 before:h-1.5 before:rounded-full before:bg-current ${STATUS_META[p.status].badgeCls}`}>
+                  {STATUS_META[p.status].label}
+                </span>
+                <span className="text-[13.5px] text-gray-800 hidden sm:block truncate">{p.condition}</span>
+                <span className="text-[13px] text-gray-800 hidden lg:block">{p.nextVisit}</span>
+                <span className="text-[13px] text-orange-800/60 hidden xl:block">{p.location}</span>
+                <div className="flex justify-end">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setSelected(p); }}
+                    className="w-8 h-8 rounded-[9px] bg-[#fdf3ec] border border-[#e8c8a8] flex items-center justify-center text-sm transition-all hover:bg-orange-500 hover:border-orange-500 hover:text-white"
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
-
     </AppLayout>
   );
 }
