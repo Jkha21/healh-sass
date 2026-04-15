@@ -1,4 +1,4 @@
-import { Appointment } from "../../types/appointments";
+import { Appointment } from "../types/appointments";
 
 export const TODAY = "2026-04-13";
 
