@@ -7,6 +7,7 @@ import { Period }        from "../types/analytics";
 import MetricsGrid       from "../components/analytics/MetricsCharts";
 import PatientsTrends    from "../components/analytics/PatientsTrends";
 import DiagnosticsPanel  from "../components/analytics/DiagonasticPanel";
+import { LoadingSpinner } from "../components/ui/LoadingSpinner";
 
 /* ─── Period options ─────────────────────────────────────── */
 const PERIOD_OPTIONS: { label: string; value: Period }[] = [
@@ -34,6 +35,7 @@ export default function AnalyticsPage() {
     diagnoses,
     donutData,
     datasets,
+    loading,
     setPeriod,
     fetchAnalyticsData,
   } = useAnalyticsStore();
@@ -42,6 +44,23 @@ export default function AnalyticsPage() {
   const dataset = useMemo(() => datasets[period], [datasets, period]);
 
   useEffect(() => { fetchAnalyticsData(); }, [fetchAnalyticsData]);
+
+  if (loading) {
+    return (
+      <AppLayout
+        title="Analytics"
+        activeItem="analytics"
+        breadcrumbs={[{ label: "Dashboard" }, { label: "Analytics" }]}
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <LoadingSpinner size="lg" />
+            <p className="text-orange-800/60 font-medium">Loading analytics data...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout

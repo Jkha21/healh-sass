@@ -1,4 +1,4 @@
-import { Prescription } from "../../components/prescriptions";
+import { Prescription } from "../components/prescriptions";
 
 export const PRESCRIPTIONS: Prescription[] = [
   {

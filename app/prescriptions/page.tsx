@@ -13,7 +13,7 @@ import {
   PrescriptionStatus,
   STATUS_META,
 } from "../components/prescriptions";
-import { PRESCRIPTIONS } from "./data/prescriptions";
+import { PRESCRIPTIONS } from "../data/prescriptions";
 
 /* ─── Prescriptions Page ─────────────────────────────────── */
 

@@ -10,6 +10,7 @@ import RevenueChart from "../components/dashboard/RevenueChart";
 import { useSession } from "../store/useSession";
 import AuthGuard from "../components/auth/authGuard";
 import { useAuthActions } from "../store/useAuthActions";
+import { LoadingSpinner } from "../components/ui/LoadingSpinner";
 import {
   PatientStatus,
   DashboardPatient,
@@ -97,6 +98,7 @@ function DashboardContent() {
     stats,
     activeTab,
     searchQuery,
+    loading,
     setActiveTab,
     setSearchQuery,
     fetchDashboardData,
@@ -133,6 +135,24 @@ function DashboardContent() {
 
   const displayName = session?.name ?? user?.displayName ?? "Doctor";
   const firstName = displayName.split(" ")[0] ?? "Doctor";
+
+  if (loading) {
+    return (
+      <AppLayout
+        title="Dashboard"
+        activeItem="dashboard"
+        showSearch
+        searchPlaceholder="Search patients, records…"
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <LoadingSpinner size="lg" />
+            <p className="text-orange-800/60 font-medium">Loading dashboard data...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout
